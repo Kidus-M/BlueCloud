@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "449573933948",
+    "project_id": "blue-cloud-44a21",
+    "storage_bucket": "blue-cloud-44a21.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449573933948:android:e047784668ec2c7e6a8af9",
+        "android_client_info": {
+          "package_name": "com.example.blue_cloud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1TDsNlbzv32n9Ahb3U0VGvBqf-OOUn7s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
