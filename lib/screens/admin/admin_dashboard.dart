@@ -409,7 +409,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                         value,
                       );
                     },
-                    activeColor: AppColors.success,
+                    activeThumbColor: AppColors.success,
                     activeTrackColor: AppColors.success.withValues(alpha: 0.3),
                     inactiveThumbColor: AppColors.grey,
                     inactiveTrackColor: AppColors.lightGrey,

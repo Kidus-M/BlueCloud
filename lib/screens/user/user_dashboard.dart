@@ -19,7 +19,6 @@ class _UserDashboardState extends State<UserDashboard>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
   late AnimationController _fabAnimController;
-  late Animation<double> _fabScaleAnim;
 
   @override
   void initState() {
@@ -28,10 +27,6 @@ class _UserDashboardState extends State<UserDashboard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..forward();
-    _fabScaleAnim = CurvedAnimation(
-      parent: _fabAnimController,
-      curve: Curves.elasticOut,
-    );
 
     // Load reports for notifications
     WidgetsBinding.instance.addPostFrameCallback((_) {
