@@ -139,34 +139,24 @@ class _SplashScreenState extends State<SplashScreen>
                           );
                         },
                         child: Container(
-                          width: 160,
-                          height: 160,
+                          width: 180,
+                          height: 180,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColors.accent.withValues(alpha: 0.3),
-                                AppColors.primary.withValues(alpha: 0.5),
-                              ],
-                            ),
-                            border: Border.all(
-                              color: AppColors.white.withValues(alpha: 0.3),
-                              width: 2,
-                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.accent.withValues(alpha: 0.3),
-                                blurRadius: 30,
-                                spreadRadius: 5,
+                                color: AppColors.accent.withValues(alpha: 0.4),
+                                blurRadius: 40,
+                                spreadRadius: 8,
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.local_police_rounded,
-                            size: 80,
-                            color: AppColors.white,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(90),
+                            child: Image.asset(
+                              'assets/images/app_icon.png',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
