@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Users Collection ───
+    match /users/{userId} {
+      // Anyone authenticated can read their own profile
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Admins can read all user profiles
+      allow read: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // Users can create their own profile on signup
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Users can update their own fcmToken only
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken']);
+
+      // Admins can update any user (toggle permissions, roles)
+      allow update: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ─── Reports Collection ───
+    match /reports/{reportId} {
+      // Any authenticated user can create a report
+      allow create: if request.auth != null;
+
+      // Users with notification permission OR admins can read reports
+      allow read: if request.auth != null
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.canReceiveNotifications == true
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+
+      // Report creators can also read their own reports
+      allow read: if request.auth != null && resource.data.createdBy == request.auth.uid;
+
+      // No one can update or delete reports
+      allow update, delete: if false;
+    }
+  }
+}
