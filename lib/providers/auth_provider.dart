@@ -28,6 +28,18 @@ class AuthProvider with ChangeNotifier {
     _authService.authStateChanges.listen(_onAuthStateChanged);
   }
 
+  /// Safely initialize notifications — never throws
+  Future<void> _initNotificationsSafely(String userId, {bool canReceive = false}) async {
+    try {
+      await _notificationService.initialize(userId);
+      if (canReceive) {
+        await _notificationService.subscribeToReports();
+      }
+    } catch (e) {
+      debugPrint('Notification init failed (non-fatal): $e');
+    }
+  }
+
   Future<void> _onAuthStateChanged(User? user) async {
     if (user == null) {
       _status = AuthStatus.unauthenticated;
@@ -35,14 +47,20 @@ class AuthProvider with ChangeNotifier {
       _userModel = null;
     } else {
       _firebaseUser = user;
-      _userModel = await _firestoreService.getUser(user.uid);
+      try {
+        _userModel = await _firestoreService.getUser(user.uid);
+      } catch (e) {
+        debugPrint('Failed to load user model: $e');
+        _userModel = null;
+      }
+
       if (_userModel != null) {
         _status = AuthStatus.authenticated;
-        // Initialize notifications
-        await _notificationService.initialize(user.uid);
-        if (_userModel!.canReceiveNotifications) {
-          await _notificationService.subscribeToReports();
-        }
+        // Initialize notifications in the background — don't block auth
+        _initNotificationsSafely(
+          user.uid,
+          canReceive: _userModel!.canReceiveNotifications,
+        );
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -82,11 +100,11 @@ class AuthProvider with ChangeNotifier {
         _userModel = userModel;
         _firebaseUser = credential.user;
         _status = AuthStatus.authenticated;
-
-        // Initialize notifications
-        await _notificationService.initialize(credential.user!.uid);
-
         notifyListeners();
+
+        // Initialize notifications AFTER marking auth as successful
+        _initNotificationsSafely(credential.user!.uid);
+
         return true;
       }
       return false;
@@ -117,14 +135,14 @@ class AuthProvider with ChangeNotifier {
         _userModel = await _firestoreService.getUser(credential.user!.uid);
         _firebaseUser = credential.user;
         _status = AuthStatus.authenticated;
-
-        // Initialize notifications
-        await _notificationService.initialize(credential.user!.uid);
-        if (_userModel?.canReceiveNotifications ?? false) {
-          await _notificationService.subscribeToReports();
-        }
-
         notifyListeners();
+
+        // Initialize notifications AFTER marking auth as successful
+        _initNotificationsSafely(
+          credential.user!.uid,
+          canReceive: _userModel?.canReceiveNotifications ?? false,
+        );
+
         return true;
       }
       return false;
@@ -138,7 +156,11 @@ class AuthProvider with ChangeNotifier {
 
   // Sign Out
   Future<void> signOut() async {
-    await _notificationService.unsubscribeFromReports();
+    try {
+      await _notificationService.unsubscribeFromReports();
+    } catch (e) {
+      debugPrint('Failed to unsubscribe from reports: $e');
+    }
     await _authService.signOut();
     _status = AuthStatus.unauthenticated;
     _firebaseUser = null;
@@ -150,7 +172,11 @@ class AuthProvider with ChangeNotifier {
   // Refresh user data
   Future<void> refreshUser() async {
     if (_firebaseUser != null) {
-      _userModel = await _firestoreService.getUser(_firebaseUser!.uid);
+      try {
+        _userModel = await _firestoreService.getUser(_firebaseUser!.uid);
+      } catch (e) {
+        debugPrint('Failed to refresh user: $e');
+      }
       notifyListeners();
     }
   }

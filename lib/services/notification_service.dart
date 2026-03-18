@@ -19,22 +19,27 @@ class NotificationService {
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       debugPrint('User granted notification permission');
 
-      // Get FCM token
-      final token = await _messaging.getToken();
-      if (token != null) {
-        await _firestoreService.updateFcmToken(userId, token);
-        debugPrint('FCM Token: $token');
+      // Get FCM token — don't let failures block initialization
+      try {
+        final token = await _messaging.getToken();
+        if (token != null) {
+          await _firestoreService.updateFcmToken(userId, token);
+          debugPrint('FCM Token saved');
+        }
+      } catch (e) {
+        debugPrint('FCM token retrieval/save failed (non-fatal): $e');
       }
 
       // Listen for token refresh
       _messaging.onTokenRefresh.listen((newToken) {
-        _firestoreService.updateFcmToken(userId, newToken);
+        _firestoreService.updateFcmToken(userId, newToken).catchError((e) {
+          debugPrint('FCM token refresh save failed: $e');
+        });
       });
 
       // Handle foreground messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('Foreground message received: ${message.notification?.title}');
-        // Handle foreground notification
         _handleMessage(message);
       });
 
@@ -50,12 +55,20 @@ class NotificationService {
 
   // Subscribe to topic
   Future<void> subscribeToReports() async {
-    await _messaging.subscribeToTopic('new_reports');
+    try {
+      await _messaging.subscribeToTopic('new_reports');
+    } catch (e) {
+      debugPrint('Failed to subscribe to reports topic: $e');
+    }
   }
 
   // Unsubscribe from topic
   Future<void> unsubscribeFromReports() async {
-    await _messaging.unsubscribeFromTopic('new_reports');
+    try {
+      await _messaging.unsubscribeFromTopic('new_reports');
+    } catch (e) {
+      debugPrint('Failed to unsubscribe from reports topic: $e');
+    }
   }
 
   // Handle incoming message
