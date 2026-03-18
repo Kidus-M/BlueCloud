@@ -68,7 +68,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
                       ],
               ),
               child: DropdownButtonFormField<String>(
-                value: widget.value,
+                initialValue: widget.value,
                 validator: widget.validator,
                 decoration: InputDecoration(
                   prefixIcon: widget.prefixIcon != null

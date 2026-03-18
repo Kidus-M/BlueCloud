@@ -39,7 +39,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final _synopsisController = TextEditingController();
 
   DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
   String? _selectedDistrict;
   String? _selectedArrestMade;
   String? _selectedWeapons;
@@ -138,7 +137,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
     if (time != null) {
       setState(() {
-        _selectedTime = time;
         _timeController.text = time.format(context);
       });
     }
@@ -265,7 +263,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     _synopsisController.clear();
     setState(() {
       _selectedDate = null;
-      _selectedTime = null;
       _selectedDistrict = null;
       _selectedArrestMade = null;
       _selectedWeapons = null;
