@@ -45,16 +45,20 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   String? _selectedGangRelated;
 
   final List<String> _districts = [
-    'District 1',
-    'District 2',
-    'District 3',
-    'District 4',
-    'District 5',
     'Central',
-    'North',
-    'South',
-    'East',
-    'West',
+    'Southern',
+    'Bayview',
+    'Mission',
+    'Northern',
+    'Park',
+    'Richmond',
+    'Ingleside',
+    'Taraval',
+    'Tenderloin',
+    'Traffic',
+    'TAC',
+    'Airport',
+    'Outside SF',
   ];
 
   final List<String> _weapons = [
@@ -64,6 +68,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     'Shotgun',
     'Knife',
     'Blunt Object',
+    'Hands',
+    'Feet',
+    'Pepper Spray',
+    'Other Chemical',
+    'Vehicle',
+    'Tools',
+    'Edged Object',
     'Other',
   ];
 
