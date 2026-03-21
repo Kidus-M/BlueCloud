@@ -131,4 +131,27 @@ class FirestoreService {
         .cast<String>()
         .toList();
   }
+
+  // ==================== READ TRACKING ====================
+
+  // Mark a report as read by a user
+  Future<void> markReportRead(String userId, String reportId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('readReports')
+        .doc(reportId)
+        .set({'readAt': FieldValue.serverTimestamp()});
+  }
+
+  // Get all read report IDs for a user
+  Future<Set<String>> getReadReportIds(String userId) async {
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('readReports')
+        .get();
+    return snapshot.docs.map((doc) => doc.id).toSet();
+  }
 }
+

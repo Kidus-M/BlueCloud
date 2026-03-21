@@ -1,10 +1,23 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firestore_service.dart';
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirestoreService _firestoreService = FirestoreService();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  // Android notification channel
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    'blue_cloud_reports',
+    'Report Notifications',
+    description: 'Notifications for new incident reports',
+    importance: Importance.high,
+    playSound: true,
+    enableVibration: true,
+  );
 
   // Initialize notifications
   Future<void> initialize(String userId) async {
@@ -19,7 +32,10 @@ class NotificationService {
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       debugPrint('User granted notification permission');
 
-      // Get FCM token — don't let failures block initialization
+      // Initialize local notifications
+      await _initLocalNotifications();
+
+      // Get FCM token
       try {
         final token = await _messaging.getToken();
         if (token != null) {
@@ -37,20 +53,79 @@ class NotificationService {
         });
       });
 
-      // Handle foreground messages
+      // Handle foreground messages — show as system notification
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('Foreground message received: ${message.notification?.title}');
-        _handleMessage(message);
+        _showLocalNotification(message);
       });
 
       // Handle background message tap
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint('Message opened app: ${message.notification?.title}');
-        _handleMessageTap(message);
       });
     } else {
       debugPrint('User declined notification permission');
     }
+  }
+
+  // Initialize flutter_local_notifications
+  Future<void> _initLocalNotifications() async {
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const initSettings = InitializationSettings(
+      android: androidInit,
+      iOS: iosInit,
+    );
+
+    await _localNotifications.initialize(initSettings);
+
+    // Create the Android notification channel
+    final androidPlugin =
+        _localNotifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(_channel);
+    }
+  }
+
+  // Show a local notification when a message arrives in foreground
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    final androidDetails = AndroidNotificationDetails(
+      _channel.id,
+      _channel.name,
+      channelDescription: _channel.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: const Color(0xFF1565C0),
+      playSound: true,
+      enableVibration: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      notification.hashCode,
+      notification.title ?? 'Blue Cloud',
+      notification.body ?? 'New notification',
+      details,
+    );
   }
 
   // Subscribe to topic
@@ -69,16 +144,6 @@ class NotificationService {
     } catch (e) {
       debugPrint('Failed to unsubscribe from reports topic: $e');
     }
-  }
-
-  // Handle incoming message
-  void _handleMessage(RemoteMessage message) {
-    debugPrint('Message data: ${message.data}');
-  }
-
-  // Handle message tap
-  void _handleMessageTap(RemoteMessage message) {
-    debugPrint('Message tapped: ${message.data}');
   }
 }
 

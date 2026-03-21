@@ -6,7 +6,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/report_provider.dart';
 import '../splash_screen.dart';
 import 'create_report_screen.dart';
-import 'notifications_screen.dart';
+import 'all_reports_screen.dart';
+import '../admin/admin_dashboard.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -28,7 +29,7 @@ class _UserDashboardState extends State<UserDashboard>
       vsync: this,
     )..forward();
 
-    // Load reports for notifications
+    // Load reports and read state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final reportProvider =
@@ -36,6 +37,7 @@ class _UserDashboardState extends State<UserDashboard>
       reportProvider.loadReports();
       if (authProvider.firebaseUser != null) {
         reportProvider.loadMyReports(authProvider.firebaseUser!.uid);
+        reportProvider.loadReadReports(authProvider.firebaseUser!.uid);
       }
     });
   }
@@ -49,12 +51,12 @@ class _UserDashboardState extends State<UserDashboard>
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final canReceive =
-        authProvider.userModel?.canReceiveNotifications ?? false;
+    final isAdmin = authProvider.isAdmin;
 
     final screens = [
       const CreateReportScreen(),
-      const NotificationsScreen(),
+      const AllReportsScreen(),
+      if (isAdmin) const AdminDashboard(),
     ];
 
     return Scaffold(
@@ -112,7 +114,9 @@ class _UserDashboardState extends State<UserDashboard>
                             ),
                           ),
                           Text(
-                            'Command Staff Notification',
+                            isAdmin
+                                ? 'Admin • Command Staff Notification'
+                                : 'Command Staff Notification',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: AppColors.accentLight.withValues(alpha: 0.8),
@@ -166,7 +170,10 @@ class _UserDashboardState extends State<UserDashboard>
                       topLeft: Radius.circular(28),
                       topRight: Radius.circular(28),
                     ),
-                    child: screens[_currentIndex],
+                    child: IndexedStack(
+                      index: _currentIndex,
+                      children: screens,
+                    ),
                   ),
                 ),
               ),
@@ -185,73 +192,68 @@ class _UserDashboardState extends State<UserDashboard>
             ),
           ],
         ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            if (index == 1 && !canReceive) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.lock_rounded,
-                          color: AppColors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Notifications access not granted. Contact admin.',
-                          style: GoogleFonts.poppins(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: AppColors.primary,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  margin: const EdgeInsets.all(16),
+        child: Consumer<ReportProvider>(
+          builder: (context, reportProvider, _) {
+            final unreadCount = reportProvider.unreadCount;
+
+            return NavigationBar(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                setState(() => _currentIndex = index);
+              },
+              backgroundColor: AppColors.white,
+              indicatorColor: AppColors.primary.withValues(alpha: 0.1),
+              height: 70,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: [
+                // Tab 1: Create Report
+                const NavigationDestination(
+                  icon: Icon(Icons.edit_document, color: AppColors.grey),
+                  selectedIcon: Icon(Icons.edit_document, color: AppColors.primary),
+                  label: 'Create Report',
                 ),
-              );
-              return;
-            }
-            setState(() => _currentIndex = index);
-          },
-          backgroundColor: AppColors.white,
-          indicatorColor: AppColors.primary.withValues(alpha: 0.1),
-          height: 70,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.edit_document,
-                  color: AppColors.grey),
-              selectedIcon: const Icon(Icons.edit_document,
-                  color: AppColors.primary),
-              label: 'Create Report',
-            ),
-            NavigationDestination(
-              icon: Stack(
-                children: [
-                  Icon(
-                    Icons.notifications_rounded,
-                    color: canReceive ? AppColors.grey : AppColors.lightGrey,
-                  ),
-                  if (!canReceive)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.lock_rounded,
-                        size: 12,
-                        color: AppColors.grey,
+                // Tab 2: All Reports (with unread badge)
+                NavigationDestination(
+                  icon: Badge(
+                    isLabelVisible: unreadCount > 0,
+                    backgroundColor: AppColors.error,
+                    label: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                ],
-              ),
-              selectedIcon: const Icon(Icons.notifications_rounded,
-                  color: AppColors.primary),
-              label: 'Notifications',
-            ),
-          ],
+                    child: const Icon(Icons.folder_rounded, color: AppColors.grey),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: unreadCount > 0,
+                    backgroundColor: AppColors.error,
+                    label: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    child: const Icon(Icons.folder_rounded, color: AppColors.primary),
+                  ),
+                  label: 'All Reports',
+                ),
+                // Tab 3: Admin (only for admins)
+                if (isAdmin)
+                  const NavigationDestination(
+                    icon: Icon(Icons.admin_panel_settings_rounded,
+                        color: AppColors.grey),
+                    selectedIcon: Icon(Icons.admin_panel_settings_rounded,
+                        color: AppColors.primary),
+                    label: 'Admin',
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );

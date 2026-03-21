@@ -7,19 +7,13 @@ import '../../providers/report_provider.dart';
 import '../../widgets/report_card.dart';
 import 'report_detail_screen.dart';
 
-class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
+class AllReportsScreen extends StatelessWidget {
+  const AllReportsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final canReceive =
-        authProvider.userModel?.canReceiveNotifications ?? false;
     final userId = authProvider.firebaseUser?.uid ?? '';
-
-    if (!canReceive) {
-      return _buildLockedState();
-    }
 
     return Consumer<ReportProvider>(
       builder: (context, reportProvider, _) {
@@ -32,6 +26,9 @@ class NotificationsScreen extends StatelessWidget {
         if (reportProvider.reports.isEmpty) {
           return _buildEmptyState();
         }
+
+        // Sort by most recent first (already sorted from Firestore)
+        final reports = reportProvider.reports;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,14 +45,14 @@ class NotificationsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
-                      Icons.notifications_active_rounded,
+                      Icons.folder_rounded,
                       color: AppColors.primary,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Recent Reports',
+                    'All Reports',
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -63,26 +60,6 @@ class NotificationsScreen extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (reportProvider.unreadCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${reportProvider.unreadCount} new',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -93,7 +70,7 @@ class NotificationsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${reportProvider.reports.length}',
+                      '${reports.length}',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -110,9 +87,9 @@ class NotificationsScreen extends StatelessWidget {
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(bottom: 20),
-                itemCount: reportProvider.reports.length,
+                itemCount: reports.length,
                 itemBuilder: (context, index) {
-                  final report = reportProvider.reports[index];
+                  final report = reports[index];
                   final unread = reportProvider.isUnread(report.id);
                   return ReportCard(
                     report: report,
@@ -137,51 +114,6 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLockedState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.lock_rounded,
-                size: 50,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Notifications Locked',
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'You don\'t have permission to view notifications yet. Please contact an administrator to grant you access.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.grey,
-                height: 1.6,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -197,7 +129,7 @@ class NotificationsScreen extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.notifications_none_rounded,
+                Icons.folder_open_rounded,
                 size: 50,
                 color: AppColors.primary,
               ),
@@ -213,7 +145,7 @@ class NotificationsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'When incident reports are submitted, they will appear here as notifications.',
+              'Submitted reports will appear here, sorted by most recent.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 14,

@@ -6,11 +6,13 @@ import '../models/report_model.dart';
 class ReportCard extends StatelessWidget {
   final ReportModel report;
   final VoidCallback onTap;
+  final bool isUnread;
 
   const ReportCard({
     super.key,
     required this.report,
     required this.onTap,
+    this.isUnread = false,
   });
 
   @override
@@ -25,15 +27,19 @@ class ReportCard extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: isUnread
+                  ? AppColors.primary.withValues(alpha: 0.06)
+                  : AppColors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.lightGrey,
-                width: 1,
+                color: isUnread
+                    ? AppColors.primary.withValues(alpha: 0.3)
+                    : AppColors.lightGrey,
+                width: isUnread ? 1.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.06),
+                  color: AppColors.primary.withValues(alpha: isUnread ? 0.1 : 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -70,13 +76,50 @@ class ReportCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Case number + incident type
+                        Row(
+                          children: [
+                            if (report.caseNumber.isNotEmpty) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '#${report.caseNumber}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            if (isUnread)
+                              Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
                         Text(
                           report.incidentType.isNotEmpty
                               ? report.incidentType
                               : 'Incident Report',
                           style: GoogleFonts.poppins(
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
                             color: AppColors.dark,
                           ),
                           maxLines: 1,
@@ -92,7 +135,8 @@ class ReportCard extends StatelessWidget {
                               '${report.formattedDate} • ${report.time}',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                color: AppColors.grey,
+                                fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
+                                color: isUnread ? AppColors.darkGrey : AppColors.grey,
                               ),
                             ),
                           ],
@@ -108,7 +152,8 @@ class ReportCard extends StatelessWidget {
                                 report.location,
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: AppColors.grey,
+                                  fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
+                                  color: isUnread ? AppColors.darkGrey : AppColors.grey,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -124,7 +169,9 @@ class ReportCard extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.offWhite,
+                      color: isUnread
+                          ? AppColors.primary.withValues(alpha: 0.1)
+                          : AppColors.offWhite,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(

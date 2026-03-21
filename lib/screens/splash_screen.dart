@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import 'auth/login_screen.dart';
-import 'admin/admin_dashboard.dart';
 import 'user/user_dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -67,17 +66,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _navigateToHome(AuthProvider authProvider) {
-    if (authProvider.isAdmin) {
-      Navigator.pushReplacement(
-        context,
-        _createRoute(const AdminDashboard()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        _createRoute(const UserDashboard()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      _createRoute(const UserDashboard()),
+    );
   }
 
   Route _createRoute(Widget page) {

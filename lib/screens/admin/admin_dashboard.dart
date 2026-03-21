@@ -3,9 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/user_model.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
-import '../splash_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -42,211 +40,125 @@ class _AdminDashboardState extends State<AdminDashboard>
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: Column(
+        children: [
+          // Stats Row
+          Consumer<UserProvider>(
+            builder: (context, userProvider, _) {
+              final totalUsers = userProvider.users.length;
+              final notifUsers = userProvider.users
+                  .where((u) => u.canReceiveNotifications)
+                  .length;
+              final adminUsers =
+                  userProvider.users.where((u) => u.isAdmin).length;
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: Column(
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    _buildStatCard(
+                      icon: Icons.people_rounded,
+                      label: 'Total',
+                      value: totalUsers.toString(),
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildStatCard(
+                      icon: Icons.notifications_active_rounded,
+                      label: 'Notified',
+                      value: notifUsers.toString(),
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildStatCard(
+                      icon: Icons.shield_rounded,
+                      label: 'Admins',
+                      value: adminUsers.toString(),
+                      color: AppColors.warning,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          // Section header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Row(
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.white.withValues(alpha: 0.15),
-                          border: Border.all(
-                            color: AppColors.white.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.admin_panel_settings_rounded,
-                          color: AppColors.white,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Admin Dashboard',
-                              style: GoogleFonts.poppins(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.white,
-                              ),
-                            ),
-                            Text(
-                              'Manage users & permissions',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: AppColors.accentLight.withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Logout
-                      IconButton(
-                        onPressed: () async {
-                          await authProvider.signOut();
-                          if (context.mounted) {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const SplashScreen()),
-                              (route) => false,
-                            );
-                          }
-                        },
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.error.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.logout_rounded,
-                            color: AppColors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.people_rounded,
+                    color: AppColors.primary,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(height: 24),
-                // Stats Row
-                Consumer<UserProvider>(
-                  builder: (context, userProvider, _) {
-                    final totalUsers = userProvider.users.length;
-                    final notifUsers = userProvider.users
-                        .where((u) => u.canReceiveNotifications)
-                        .length;
-                    final adminUsers =
-                        userProvider.users.where((u) => u.isAdmin).length;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          _buildStatCard(
-                            icon: Icons.people_rounded,
-                            label: 'Total',
-                            value: totalUsers.toString(),
-                            color: AppColors.accent,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildStatCard(
-                            icon: Icons.notifications_active_rounded,
-                            label: 'Notified',
-                            value: notifUsers.toString(),
-                            color: AppColors.success,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildStatCard(
-                            icon: Icons.shield_rounded,
-                            label: 'Admins',
-                            value: adminUsers.toString(),
-                            color: AppColors.warning,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                // User List
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: AppColors.offWhite,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Text(
-                            'Registered Users',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.dark,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Consumer<UserProvider>(
-                            builder: (context, userProvider, _) {
-                              if (userProvider.isLoading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.primary,
-                                  ),
-                                );
-                              }
-
-                              if (userProvider.users.isEmpty) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.people_outline_rounded,
-                                          size: 60, color: AppColors.grey),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'No users registered yet',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          color: AppColors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-
-                              return ListView.builder(
-                                physics: const BouncingScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                itemCount: userProvider.users.length,
-                                itemBuilder: (context, index) {
-                                  final user = userProvider.users[index];
-                                  return _buildUserCard(user, userProvider);
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                const SizedBox(width: 10),
+                Text(
+                  'Registered Users',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.dark,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          // User List
+          Expanded(
+            child: Consumer<UserProvider>(
+              builder: (context, userProvider, _) {
+                if (userProvider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  );
+                }
+
+                if (userProvider.users.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_outline_rounded,
+                            size: 60, color: AppColors.grey),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No users registered yet',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  itemCount: userProvider.users.length,
+                  itemBuilder: (context, index) {
+                    final user = userProvider.users[index];
+                    return _buildUserCard(user, userProvider);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -261,10 +173,10 @@ class _AdminDashboardState extends State<AdminDashboard>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.12),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.white.withValues(alpha: 0.15),
+            color: color.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -276,14 +188,14 @@ class _AdminDashboardState extends State<AdminDashboard>
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: AppColors.white,
+                color: AppColors.dark,
               ),
             ),
             Text(
               label,
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                color: AppColors.accentLight.withValues(alpha: 0.8),
+                color: AppColors.grey,
               ),
             ),
           ],

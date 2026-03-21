@@ -7,6 +7,7 @@ class ReportProvider with ChangeNotifier {
 
   List<ReportModel> _reports = [];
   List<ReportModel> _myReports = [];
+  final Set<String> _readReportIds = {};
   bool _isLoading = false;
   bool _isSubmitting = false;
   String? _error;
@@ -18,6 +19,38 @@ class ReportProvider with ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
   String? get error => _error;
   String? get successMessage => _successMessage;
+
+  /// Number of unread reports
+  int get unreadCount {
+    return _reports.where((r) => !_readReportIds.contains(r.id)).length;
+  }
+
+  /// Check if a specific report is unread
+  bool isUnread(String? reportId) {
+    if (reportId == null) return true;
+    return !_readReportIds.contains(reportId);
+  }
+
+  /// Mark a report as read
+  void markAsRead(String? reportId, String userId) {
+    if (reportId == null) return;
+    if (_readReportIds.add(reportId)) {
+      // Save to Firestore for persistence
+      _firestoreService.markReportRead(userId, reportId);
+      notifyListeners();
+    }
+  }
+
+  /// Load the user's read report IDs from Firestore
+  Future<void> loadReadReports(String userId) async {
+    try {
+      final readIds = await _firestoreService.getReadReportIds(userId);
+      _readReportIds.addAll(readIds);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to load read reports: $e');
+    }
+  }
 
   // Stream all reports
   void loadReports() {

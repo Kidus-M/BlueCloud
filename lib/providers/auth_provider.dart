@@ -68,6 +68,16 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Emails that are automatically given admin role
+  static const List<String> _adminEmails = [
+    'tekula.habesha@gmail.com',
+    'kidusmesfinteferi@gmail.com',
+  ];
+
+  static bool _isAdminEmail(String email) {
+    return _adminEmails.contains(email.toLowerCase().trim());
+  }
+
   // Sign Up
   Future<bool> signUp({
     required String firstName,
@@ -81,6 +91,9 @@ class AuthProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
+      // Auto-assign admin role for whitelisted emails
+      final assignedRole = _isAdminEmail(email) ? 'admin' : role;
+
       final credential = await _authService.signUp(
         email: email,
         password: password,
@@ -92,8 +105,8 @@ class AuthProvider with ChangeNotifier {
           firstName: firstName,
           lastName: lastName,
           email: email,
-          role: role,
-          canReceiveNotifications: false,
+          role: assignedRole,
+          canReceiveNotifications: assignedRole == 'admin',
         );
 
         await _firestoreService.createUser(userModel);
