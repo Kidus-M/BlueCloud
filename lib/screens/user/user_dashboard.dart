@@ -52,6 +52,7 @@ class _UserDashboardState extends State<UserDashboard>
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isAdmin = authProvider.isAdmin;
+    final userId = authProvider.firebaseUser?.uid ?? '';
 
     final screens = [
       const CreateReportScreen(),
@@ -181,8 +182,10 @@ class _UserDashboardState extends State<UserDashboard>
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+      bottomNavigationBar: screens.length < 2
+          ? null
+          : Container(
+              decoration: BoxDecoration(
           color: AppColors.white,
           boxShadow: [
             BoxShadow(
@@ -194,7 +197,7 @@ class _UserDashboardState extends State<UserDashboard>
         ),
         child: Consumer<ReportProvider>(
           builder: (context, reportProvider, _) {
-            final unreadCount = reportProvider.unreadCount;
+            final unreadCount = reportProvider.getUnreadCount(userId);
 
             return NavigationBar(
               selectedIndex: _currentIndex,
@@ -214,34 +217,34 @@ class _UserDashboardState extends State<UserDashboard>
                 ),
                 // Tab 2: All Reports (with unread badge)
                 NavigationDestination(
-                  icon: Badge(
-                    isLabelVisible: unreadCount > 0,
-                    backgroundColor: AppColors.error,
-                    label: Text(
-                      '$unreadCount',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                    icon: Badge(
+                      isLabelVisible: unreadCount > 0,
+                      backgroundColor: AppColors.error,
+                      label: Text(
+                        '$unreadCount',
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
+                      child: const Icon(Icons.folder_rounded, color: AppColors.grey),
                     ),
-                    child: const Icon(Icons.folder_rounded, color: AppColors.grey),
-                  ),
-                  selectedIcon: Badge(
-                    isLabelVisible: unreadCount > 0,
-                    backgroundColor: AppColors.error,
-                    label: Text(
-                      '$unreadCount',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                    selectedIcon: Badge(
+                      isLabelVisible: unreadCount > 0,
+                      backgroundColor: AppColors.error,
+                      label: Text(
+                        '$unreadCount',
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
+                      child: const Icon(Icons.folder_rounded, color: AppColors.primary),
                     ),
-                    child: const Icon(Icons.folder_rounded, color: AppColors.primary),
+                    label: 'All Reports',
                   ),
-                  label: 'All Reports',
-                ),
                 // Tab 3: Admin (only for admins)
                 if (isAdmin)
                   const NavigationDestination(

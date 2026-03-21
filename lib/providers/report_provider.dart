@@ -21,14 +21,16 @@ class ReportProvider with ChangeNotifier {
   String? get successMessage => _successMessage;
 
   /// Number of unread reports
-  int get unreadCount {
-    return _reports.where((r) => !_readReportIds.contains(r.id)).length;
+  int getUnreadCount(String userId) {
+    if (userId.isEmpty) return 0;
+    return _reports.where((r) => r.createdBy != userId && !_readReportIds.contains(r.id)).length;
   }
 
   /// Check if a specific report is unread
-  bool isUnread(String? reportId) {
-    if (reportId == null) return true;
-    return !_readReportIds.contains(reportId);
+  bool isUnread(ReportModel report, String userId) {
+    if (userId.isEmpty) return false;
+    if (report.createdBy == userId) return false;
+    return !_readReportIds.contains(report.id);
   }
 
   /// Mark a report as read
@@ -45,6 +47,7 @@ class ReportProvider with ChangeNotifier {
   Future<void> loadReadReports(String userId) async {
     try {
       final readIds = await _firestoreService.getReadReportIds(userId);
+      _readReportIds.clear();
       _readReportIds.addAll(readIds);
       notifyListeners();
     } catch (e) {

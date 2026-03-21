@@ -14,6 +14,13 @@ class AllReportsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final userId = authProvider.firebaseUser?.uid ?? '';
+    final canReceive = authProvider.userModel?.canReceiveNotifications ?? false;
+    final isAdmin = authProvider.userModel?.role == 'admin';
+    final canViewReports = canReceive || isAdmin;
+
+    if (!canViewReports) {
+      return _buildNoPermissionState();
+    }
 
     return Consumer<ReportProvider>(
       builder: (context, reportProvider, _) {
@@ -90,7 +97,7 @@ class AllReportsScreen extends StatelessWidget {
                 itemCount: reports.length,
                 itemBuilder: (context, index) {
                   final report = reports[index];
-                  final unread = reportProvider.isUnread(report.id);
+                  final unread = reportProvider.isUnread(report, userId);
                   return ReportCard(
                     report: report,
                     isUnread: unread,
@@ -146,6 +153,51 @@ class AllReportsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Submitted reports will appear here, sorted by most recent.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.grey,
+                height: 1.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoPermissionState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_rounded,
+                size: 50,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Access Denied',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.dark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'The admin has not given you permissions yet. Please contact the administrator to get access to view all reports.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 14,

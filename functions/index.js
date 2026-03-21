@@ -92,24 +92,6 @@ exports.onNewReport = onDocumentCreated("reports/{reportId}", async (event) => {
       });
     }
 
-    // Also send to 'new_reports' topic for topic-based subscribers
-    const topicMessage = {
-      notification: {
-        title: title,
-        body: body,
-      },
-      data: {
-        reportId: event.params.reportId,
-        incidentType: incidentType,
-        location: location,
-        district: district,
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-      },
-      topic: "new_reports",
-    };
-
-    await messaging.send(topicMessage);
-    console.log("Topic notification sent successfully.");
   } catch (error) {
     console.error("Error sending notifications:", error);
   }

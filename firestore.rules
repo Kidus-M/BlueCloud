@@ -23,6 +23,11 @@ service cloud.firestore {
       // Admins can update any user (toggle permissions, roles)
       allow update: if request.auth != null
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // Allow users to store their read notifications
+      match /readReports/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // ─── Reports Collection ───
