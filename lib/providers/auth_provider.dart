@@ -93,6 +93,10 @@ class AuthProvider with ChangeNotifier {
 
       // Auto-assign admin role for whitelisted emails
       final assignedRole = _isAdminEmail(email) ? 'admin' : role;
+      
+      // Auto-grant permissions to SF Gov emails
+      final bool isSfGov = email.trim().toLowerCase().endsWith('@sfgov.org');
+      final bool canReceive = assignedRole == 'admin' || isSfGov;
 
       final credential = await _authService.signUp(
         email: email,
@@ -106,7 +110,7 @@ class AuthProvider with ChangeNotifier {
           lastName: lastName,
           email: email,
           role: assignedRole,
-          canReceiveNotifications: assignedRole == 'admin',
+          canReceiveNotifications: canReceive,
         );
 
         await _firestoreService.createUser(userModel);
